@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>catso</title>
+<style>
+body{margin:0;background:#2b2233;font-family:'Comic Sans MS',cursive,sans-serif;overflow:hidden;height:100vh;color:#ffe}
+  #c { position:absolute; left:50%;top:50%; transform:translate(-50%,-50%) ;cursor:pointer;width:min(70vw,340px);border-radius:30px;box-shadow:0 0 60px #ff9be5;user-select:none;-webkit-user-drag:none;transition:transform .08s}
+#c.sq{transform:translate(-50%,-50%) scale(1.12,.85)!important}
+.b{position:absolute;pointer-events:none;font-size:28px;font-weight:bold;color:#aef;animation:up 1s forwards;text-shadow:2px 2px 0 #f0a}
+@keyframes up{to{transform:translateY(-120px) rotate(20deg);opacity:0}}
+#n{position:fixed;top:14px;width:100%;text-align:center;font-size:30px}
+    #m{position:fixed;bottom:14px;right:14px;background:#ff9be5;border:0;border-radius:99px;padding:10px 16px;font:inherit;cursor:pointer;color:#2b2233}
+  #t{position:fixed;bottom:18px;left:14px;opacity:.6;font-size:13px}
+.rain{position:fixed;width:2px;height:14px;background:#8af5;top:-20px;animation:fall linear infinite;pointer-events:none}
+@keyframes fall{to{top:110vh}}
+.rain2{}
+#old{display:none}
+</style>
+<style>#n{letter-spacing:1px}</style>
+</head>
+<body>
+<div id="n">bloops: 0</div>
+<img id="c" src="cat.jpg" draggable="false" alt="cat">
+<button id="m">🔇 lofi off</button>
+<div id=t>click the cat</div>
+<div id="old">catso v0.0.0.1</div>
+<script>
+var x=0,  musicOn=false,X=0,xx
+let A = ['lofi1.mp3','lofi2.mp3'], idx=0
+const lofi=new Audio(A[0]); lofi.volume=.35
+var bl = 'bloop.mp3'
+var srv = location.protocol.indexOf('http')==0 && location.port=='6969'
+lofi.onended=function(){ idx++; if(idx>=A.length){idx=0}; lofi.src=A[idx]; lofi.play().catch(e=>{}) }
+function startLofi(){if(musicOn)return;musicOn=true;lofi.play().then(()=>{document.getElementById('m').innerHTML='🎵 lofi on'}).catch(function(e){musicOn=false})}
+function startlofi(){startLofi()}
+//function bloop2(){ new Audio('bloop.mp3').play() }
+
+if(srv){fetch('/count').then(r=>r.json()).then(j=>{x=j.n;document.getElementById("n").innerText='bloops: '+x}).catch(()=>{})}
+
+document.getElementById('c').addEventListener('pointerdown',function(e){
+  e.preventDefault()
+  startlofi()
+    var s=new Audio(bl); s.playbackRate = 0.8+Math.random()*.6; s.preservesPitch=false; s.mozPreservesPitch=false; s.webkitPreservesPitch=false; s.play().catch(()=>0)
+  x=x+1; X++; document.getElementById("n").innerText = 'bloops: '+x
+  if(srv){ fetch('/bloop',{method:'POST'}).then(r=>r.json()).then(j=>{ if(j.n>x){x=j.n} }).catch(e=>{}) }
+  this.classList.add('sq'); var me=this; setTimeout(function(){me.classList.remove('sq')},90)
+  let d=document.createElement('div');d.className='b'
+  d.textContent=['bloop','blop','BLOOP','bleep','blep','boop'][Math.floor(Math.random()*6)]
+  d.style.left=(e.clientX-30+(Math.random()*40-20))+'px'; d.style.top=(e.clientY-30)+'px'
+  document.body.appendChild(d);setTimeout(()=>d.remove(),1000)
+  if(x%25==0){document.body.style.background='hsl('+(Math.random()*360|0)+',30%,18%)'} // party
+  if (X == 100) { document.getElementById('t').innerText = 'ok u can stop now' }
+})
+
+document.getElementById('m').onclick=function(){
+ if(!musicOn){startLofi()}else{ lofi.pause();musicOn=false;this.innerHTML='🔇 lofi off'}
+}
+for(var i=0;i<40;i++){ var r=document.createElement('div');r.className='rain';r.style.left=Math.random()*100+'vw';r.style.animationDuration=(0.6+Math.random()*1.2)+'s';r.style.animationDelay=(-Math.random()*2)+'s';document.body.appendChild(r)}
+lofi.play().then(()=>{musicOn=true;document.getElementById('m').innerHTML='🎵 lofi on'}).catch(e=>{})
+catto.meow()
+</script>
+</body></html>
