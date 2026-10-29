@@ -40,12 +40,14 @@ if(srv){fetch('/count').then(r=>r.json()).then(j=>{x=j.n;document.getElementById
 document.getElementById('c').addEventListener('pointerdown',function(e){
   e.preventDefault()
   startlofi()
-    var s=new Audio(bl); s.playbackRate = 0.8+Math.random()*.6; s.preservesPitch=false; s.mozPreservesPitch=false; s.webkitPreservesPitch=false; s.play().catch(()=>0)
-  x=x+1; X++; document.getElementById("n").innerText = 'bloops: '+x
+    var s=new Audio(bl); s.playbackRate = window.py_pitch ? window.py_pitch() : 0.8+Math.random()*.6; s.preservesPitch=false; s.mozPreservesPitch=false; s.webkitPreservesPitch=false; s.play().catch(()=>0)
+  var ww
+  if(window.py_bloop){ ww=window.py_bloop(); x=window.py_count() } else { x=x+1 }
+  X++; document.getElementById("n").innerText = 'bloops: '+x
   if(srv){ fetch('/bloop',{method:'POST'}).then(r=>r.json()).then(j=>{ if(j.n>x){x=j.n} }).catch(e=>{}) }
   this.classList.add('sq'); var me=this; setTimeout(function(){me.classList.remove('sq')},90)
   let d=document.createElement('div');d.className='b'
-  d.textContent=['bloop','blop','BLOOP','bleep','blep','boop'][Math.floor(Math.random()*6)]
+  d.textContent=ww||['bloop','blop','BLOOP','bleep','blep','boop'][Math.floor(Math.random()*6)]
   d.style.left=(e.clientX-30+(Math.random()*40-20))+'px'; d.style.top=(e.clientY-30)+'px'
   document.body.appendChild(d);setTimeout(()=>d.remove(),1000)
   if(x%25==0){document.body.style.background='hsl('+(Math.random()*360|0)+',30%,18%)'} // party
@@ -58,5 +60,14 @@ document.getElementById('m').onclick=function(){
 for(var i=0;i<40;i++){ var r=document.createElement('div');r.className='rain';r.style.left=Math.random()*100+'vw';r.style.animationDuration=(0.6+Math.random()*1.2)+'s';r.style.animationDelay=(-Math.random()*2)+'s';document.body.appendChild(r)}
 lofi.play().then(()=>{musicOn=true;document.getElementById('m').innerHTML='🎵 lofi on'}).catch(e=>{})
 catto.meow()
+</script>
+<script src="https://cdn.jsdelivr.net/pyodide/v0.26.4/full/pyodide.js"></script>
+<script>
+(async function(){ try{
+ let py = await loadPyodide()
+ let code=await (await fetch('catso.py')).text()
+ py.runPython(code)
+ }catch(e){ console.log('no python :(',e) }
+})()
 </script>
 </body></html>
