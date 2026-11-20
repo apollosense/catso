@@ -17,6 +17,19 @@ body{margin:0;background:#2b2233;font-family:'Comic Sans MS',cursive,sans-serif;
 #old{display:none}
 </style>
 <style>#n{letter-spacing:1px}</style>
+<style>
+#lbt{position:fixed;top:62px;right:12px;z-index:5;background:#3a2e45;color:#ffe;border:2px solid #ff9be5;border-radius:99px;padding:6px 12px;font:inherit;font-size:14px;cursor:pointer}
+#lb{position:fixed;top:100px;right:12px;z-index:5;width:220px;max-height:60vh;overflow:auto;background:#2b2233e6;border:2px solid #ff9be5;border-radius:18px;padding:10px 12px;font-size:14px;box-shadow:0 0 30px #ff9be555}
+#lb.hide{display:none}
+#lb h3{margin:0 0 6px;font-size:16px;text-align:center}
+#lb .r{display:flex;gap:6px;align-items:center;padding:3px 4px;border-radius:8px}
+#lb .r.me{background:#ff9be533}
+#lb .r .p{width:20px;opacity:.7}
+#lb .r .f{font-size:18px}
+#lb .r .nm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#lb .r .v{color:#aef}
+#lb .you{margin-top:6px;opacity:.75;font-size:12px;text-align:center}
+</style>
 </head>
 <body>
 <div id="n">bloops: 0</div>
@@ -24,6 +37,8 @@ body{margin:0;background:#2b2233;font-family:'Comic Sans MS',cursive,sans-serif;
 <button id="m">🔇 lofi off</button>
 <div id=t>click the cat</div>
 <div id="old">catso v0.0.0.1</div>
+<button id="lbt">🌍 top countries</button>
+<div id="lb"><h3>🌍 top countries</h3><div id="lbl">loading...</div><div class="you" id="you"></div></div>
 <script>
 var x=0,  musicOn=false,X=0,xx
 let A = ['lofi1.mp3','lofi2.mp3'], idx=0
@@ -60,6 +75,54 @@ document.getElementById('m').onclick=function(){
 for(var i=0;i<40;i++){ var r=document.createElement('div');r.className='rain';r.style.left=Math.random()*100+'vw';r.style.animationDuration=(0.6+Math.random()*1.2)+'s';r.style.animationDelay=(-Math.random()*2)+'s';document.body.appendChild(r)}
 lofi.play().then(()=>{musicOn=true;document.getElementById('m').innerHTML='🎵 lofi on'}).catch(e=>{})
 catto.meow()
+</script>
+<script>
+// country leaderboard (supabase)
+(function(){
+var SB='https://nryegbqqcjukozqkfdxi.supabase.co', KEY='sb_publishable_sUf-_Sow2eJuuJAAE0F5SA_aNImw9z9'
+var H={'apikey':KEY,'Content-Type':'application/json'}
+var cc=null, pending=0, lb=document.getElementById('lb'), lbl=document.getElementById('lbl')
+var names; try{ names=new Intl.DisplayNames(['en'],{type:'region'}) }catch(e){}
+function nm(c){ if(c=='XX')return 'somewhere'; try{return names.of(c)||c}catch(e){return c} }
+function flag(c){ if(!/^[A-Z]{2}$/.test(c)||c=='XX')return '🏳️'; return String.fromCodePoint(...[...c].map(ch=>127397+ch.charCodeAt(0))) }
+function fmt(n){ return Number(n).toLocaleString('en') }
+function guess(){ var l=(navigator.language||'').split('-')[1]; return (l&&/^[A-Za-z]{2}$/.test(l))?l.toUpperCase():'XX' }
+try{ cc=localStorage.getItem('catso_cc') }catch(e){}
+if(!cc){
+  cc=guess()
+  fetch('https://api.country.is/').then(r=>r.json()).then(j=>{ if(j&&/^[A-Z]{2}$/.test(j.country)){cc=j.country; try{localStorage.setItem('catso_cc',cc)}catch(e){}; you()} }).catch(()=>{})
+}
+function you(){ document.getElementById('you').textContent='you are bloopin for '+flag(cc)+' '+nm(cc) }
+you()
+if(innerWidth<700) lb.classList.add('hide')
+document.getElementById('lbt').onclick=function(){ lb.classList.toggle('hide') }
+function load(){
+  fetch(SB+'/rest/v1/catso_countries?select=code,bloops&order=bloops.desc&limit=15',{headers:H})
+  .then(r=>r.json()).then(rows=>{
+    if(!Array.isArray(rows))return
+    if(!rows.length){ lbl.textContent='no bloops yet, be first!'; return }
+    lbl.innerHTML=''
+    rows.forEach(function(r,i){
+      var d=document.createElement('div'); d.className='r'+(r.code==cc?' me':'')
+      var bl=r.bloops+(r.code==cc?pending:0)
+      d.innerHTML='<span class="p">'+(i+1)+'</span><span class="f"></span><span class="nm"></span><span class="v"></span>'
+      d.children[1].textContent=flag(r.code); d.children[2].textContent=nm(r.code); d.children[3].textContent=fmt(bl)
+      lbl.appendChild(d)
+    })
+  }).catch(()=>{ lbl.textContent='leaderboard offline :(' })
+}
+function flush(keep){
+  if(pending<1)return
+  var k=Math.min(pending,60); pending-=k
+  fetch(SB+'/rest/v1/rpc/catso_bloop',{method:'POST',headers:H,keepalive:!!keep,body:JSON.stringify({cc:cc,k:k})})
+  .then(()=>{ if(!keep)load() }).catch(()=>{ pending+=k })
+}
+document.getElementById('c').addEventListener('pointerdown',function(){ pending++ })
+setInterval(flush,2000)
+setInterval(load,6000)
+document.addEventListener('visibilitychange',function(){ if(document.visibilityState=='hidden')flush(true) })
+load()
+})()
 </script>
 <script src="https://cdn.jsdelivr.net/pyodide/v0.26.4/full/pyodide.js"></script>
 <script>
